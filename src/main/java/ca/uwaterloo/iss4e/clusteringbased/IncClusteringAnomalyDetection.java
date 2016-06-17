@@ -1,6 +1,11 @@
 package ca.uwaterloo.iss4e.clusteringbased;
 
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
@@ -37,7 +42,7 @@ public final class IncClusteringAnomalyDetection {
   public static void main(String[] args) {
     // hdfs://quickstart.cloudera:8020/user/cloudera/sparkStreaming/
 
-    if (args.length < 1) {
+    if (args.length < 2) {
       System.err.println("Usage: IncClusteringAnomalyDetection hdfsPath");
       System.exit(1);
     }
@@ -45,7 +50,7 @@ public final class IncClusteringAnomalyDetection {
 
     SparkConf sparkConf = new SparkConf().setAppName("IncClusteringAnomalyDetection");
     // Create the context with a 1 second batch size
-    JavaStreamingContext jssc = new JavaStreamingContext(sparkConf, new Duration(2000));
+    //JavaStreamingContext jssc = new JavaStreamingContext(sparkConf, new Duration(2000));
 
     /*int numThreads = Integer.parseInt(args[3]);
     Map<String, Integer> topicMap = new HashMap<String, Integer>();
@@ -65,8 +70,10 @@ public final class IncClusteringAnomalyDetection {
       }
     });*/
 
-    JavaDStream<String> lines = jssc.textFileStream(args[0]);
-    JavaPairDStream<String, String> clusters = lines.mapToPair(new PairFunction<String, String, String>() {
+    //JavaDStream<String> lines = jssc.textFileStream(args[0]);
+    final JavaSparkContext sc = new JavaSparkContext(sparkConf);
+    JavaRDD<String> lines = sc.textFile(args[0]);
+    JavaPairRDD<String, String> clusters = lines.mapToPair(new PairFunction<String, String, String>() {
       @Override
       public Tuple2<String, String> call(String x) {
 
@@ -142,64 +149,66 @@ public final class IncClusteringAnomalyDetection {
     });
 
 
-    JavaDStream<String> updateClusterInfo = clusters.map(new Function<Tuple2<String, String>, String>() {
-      @Override
-      public String call(Tuple2<String, String> tuple2) {
-        //return tuple2._1() + "::" + tuple2._2();
+     clusters.mapToPair(new PairFunction<Tuple2<String,String>, String, String>() {
+       @Override
+       public Tuple2<String, String> call(Tuple2<String, String> tuple2) throws Exception {
 
-        //long lStartTime = new Date().getTime(); // start time
-        long lStartTime = System.nanoTime();
+         //return tuple2._1() + "::" + tuple2._2();
 
-        if (numberOfPoints < TRAINING_POINTS) {
-          String[] key_collection = tuple2._1().replaceAll("\\[", "").replaceAll("\\]", "").split(",");
+         //long lStartTime = new Date().getTime(); // start time
+         long lStartTime = System.nanoTime();
 
-          String[] s_array = tuple2._2().split(":");
+         if (numberOfPoints < TRAINING_POINTS) {
+           String[] key_collection = tuple2._1().replaceAll("\\[", "").replaceAll("\\]", "").split(",");
 
-          long s_time = Long.parseLong(s_array[1]);
+           String[] s_array = tuple2._2().split(":");
 
-          String[] s_collection = s_array[0].split(";");
-          String s_point = s_collection[0];
-          String s_numOfPoint = s_collection[1];
-          int count = Integer.parseInt(s_numOfPoint);
-          s_time = s_time / count;
-          incKMean.updateCluster(key_collection, s_point.split(","), count);
-          numberOfPoints += count;
-          //long lEndTime = new Date().getTime(); // end time
-          long lEndTime = System.nanoTime();
-          long difference = lEndTime - lStartTime; // check different
-          long totalTime = s_time + difference;
-          return incKMean.toString() + "\n Elapsed milliseconds for training: " + totalTime;
-        } else {
-          String[] s_array = tuple2._2().split(":");
-          long s_time = Long.parseLong(s_array[1]);
+           long s_time = Long.parseLong(s_array[1]);
 
-          int count = Integer.parseInt(s_array[0]);
-          s_time = s_time / count;
-          String key = tuple2._1();
-          numberOfPoints += count;
+           String[] s_collection = s_array[0].split(";");
+           String s_point = s_collection[0];
+           String s_numOfPoint = s_collection[1];
+           int count = Integer.parseInt(s_numOfPoint);
+           s_time = s_time / count;
+           incKMean.updateCluster(key_collection, s_point.split(","), count);
+           numberOfPoints += count;
+           //long lEndTime = new Date().getTime(); // end time
+           long lEndTime = System.nanoTime();
+           long difference = lEndTime - lStartTime; // check different
+           long totalTime = s_time + difference;
+           return new Tuple2<String, String>(incKMean.toString(), String.valueOf(totalTime));
+         } else {
+           String[] s_array = tuple2._2().split(":");
+           long s_time = Long.parseLong(s_array[1]);
 
-          String message = "";
-          if (key.equalsIgnoreCase("<benign>")) {
-            benign = benign + count;
-            message = "benign: " + benign;
-          } else {
-            outlier = outlier + count;
-            message = "outlier: " + outlier;
-          }
+           int count = Integer.parseInt(s_array[0]);
+           s_time = s_time / count;
+           String key = tuple2._1();
+           numberOfPoints += count;
 
-          //long lEndTime = new Date().getTime(); // end time
-          long lEndTime = System.nanoTime();
-          long difference = lEndTime - lStartTime; // check different
+           String message = "";
+           if (key.equalsIgnoreCase("<benign>")) {
+             benign = benign + count;
+             message = "benign: " + benign;
+           } else {
+             outlier = outlier + count;
+             message = "outlier: " + outlier;
+           }
 
-          long totalTime = s_time + difference;
-          return incKMean.toString() + "\n" + message + "\n Elapsed milliseconds for predicting: " + totalTime;
-        }
-      }
-    });
+           //long lEndTime = new Date().getTime(); // end time
+           long lEndTime = System.nanoTime();
+           long difference = lEndTime - lStartTime; // check different
 
-    clusters.print();
-    updateClusterInfo.print();
-    jssc.start();
-    jssc.awaitTermination();
-  }
+           long totalTime = s_time + difference;
+           return new Tuple2<String, String>(incKMean.toString() + ":" + message, String.valueOf(totalTime));
+           //   return incKMean.toString() + "\n" + message + "\n Elapsed milliseconds for predicting: " + totalTime;
+         }
+       }
+     }).saveAsNewAPIHadoopFile(args[0], Text.class, Text.class, TextOutputFormat.class);;
+
+    //clusters.print();
+    //updateClusterInfo.print();
+    //jssc.start();
+    //jssc.awaitTermination();
+     }
 }
