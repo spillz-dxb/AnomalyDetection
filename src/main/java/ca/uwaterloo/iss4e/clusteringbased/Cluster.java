@@ -3,7 +3,6 @@ package ca.uwaterloo.iss4e.clusteringbased;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
-import org.apache.log4j.Logger;
 
 public class Cluster implements Serializable {
 	int clusterId;
@@ -23,7 +22,7 @@ public class Cluster implements Serializable {
 
 	// Single cluster
 	public Cluster(String[] centroidPoint, int numberOfPoint) {
-		this.centroid = ClusterUtility.getVector(centroidPoint, false);
+		this.centroid = ClusterHelper.getVector(centroidPoint, false);
 		this.radius = 0;
 		this.numberOfPoint = numberOfPoint;
 	}
@@ -32,21 +31,21 @@ public class Cluster implements Serializable {
 			int numberOfPoint) {
 		clusterId = id;
 		threshHold = th;
-		this.centroid = ClusterUtility.getVector(centroidPoint, false);
+		this.centroid = ClusterHelper.getVector(centroidPoint, false);
 		this.radius = radius;
 		this.numberOfPoint = numberOfPoint;
 
 	}
 
 	public void assignToEmptyCluster(String[] points, int numberOfPointInCluster) {
-		Vector<Double> v = ClusterUtility.getVector(points, false);
+		Vector<Double> v = ClusterHelper.getVector(points, false);
 		centroid = v;
 		radius = 0;
 		numberOfPoint = numberOfPoint + numberOfPointInCluster ;
 	}
 
-	public void assignToCluster(String[] points) {
-		Vector<Double> v = ClusterUtility.getVector(points, false);
+	public void assignToCluster(String[] point) {
+		Vector<Double> v = ClusterHelper.getVector(point, false);
 		Vector<Double> updatedVector = new Vector<Double>(centroid.size());
 
 		if (v.size() == centroid.size()) {
@@ -71,7 +70,7 @@ public class Cluster implements Serializable {
 			}
 
 			centroid = updatedVector;
-			double distance = ClusterUtility.calculateEuclideanDistance(v,
+			double distance = ClusterHelper.calculateEuclideanDistance(v,
 					centroid);
 			if (distance > radius)
 				radius = distance;
@@ -80,7 +79,7 @@ public class Cluster implements Serializable {
 
 	public void updateCluster(String[] point, int sumOfNumberOfPoints) {
 		
-		Vector<Double> v = ClusterUtility.getVector(point, false);
+		Vector<Double> v = ClusterHelper.getVector(point, false);
 		Vector<Double> updatedVector = new Vector<Double>(centroid.size());
 
 		if (v.size() == centroid.size()) {
@@ -103,16 +102,16 @@ public class Cluster implements Serializable {
 		}
 	}
 
-	public boolean fitInCluster(String[] points) {
-		Vector<Double> v = ClusterUtility.getVector(points, false);
+	public boolean fitInCluster(String[] point) {
+		Vector<Double> v = ClusterHelper.getVector(point, false);
 
 		return fitInCluster(v);
 	}
 
 	public boolean fitInCluster(Vector<Double> v) {
 		// double similarity =
-		// ClusterUtility.calculateCosineSimilarity(centroid, v);
-		double similarity = ClusterUtility.calculateSimilarity(centroid, v);
+		// ClusterHelper.calculateCosineSimilarity(centroid, v);
+		double similarity = ClusterHelper.calculateSimilarity(centroid, v);
 		System.out.println("Similarity: " + similarity);
 		return similarity >= threshHold;
 	}

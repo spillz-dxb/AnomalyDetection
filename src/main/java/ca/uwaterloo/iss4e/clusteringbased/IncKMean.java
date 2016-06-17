@@ -2,7 +2,6 @@ package ca.uwaterloo.iss4e.clusteringbased;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Vector;
-import org.apache.log4j.Logger;
 
 public class IncKMean implements Serializable {
 	double threshHold = .8;
@@ -17,19 +16,19 @@ public class IncKMean implements Serializable {
 		this.name = name;
 	}
 
-	public void doClustering(String[] points) {
+	public void doClustering(String[] point) {
 
 		boolean isFit = false;
 		for (int i = 0; i < clusters.size() && !isFit; i++) {
-			if (clusters.get(i).fitInCluster(points)) {
-				clusters.get(i).assignToCluster(points);
+			if (clusters.get(i).fitInCluster(point)) {
+				clusters.get(i).assignToCluster(point);
 				isFit = true;
 			}
 		}
 
 		if (!isFit) {
 			Cluster cluster = new Cluster(numberOfCluster, threshHold);
-			cluster.assignToEmptyCluster(points, 1);
+			cluster.assignToEmptyCluster(point, 1);
 			clusters.add(cluster);
 			numberOfCluster++;
 		}
@@ -48,7 +47,7 @@ public class IncKMean implements Serializable {
 	
 	public int findClusterByCentroid(String[] center)
 	{
-		Vector<Double> centroid = ClusterUtility.getVector(center, false); 
+		Vector<Double> centroid = ClusterHelper.getVector(center, false);
 		for (int i = 0; i < clusters.size(); i++) {
 			Cluster nearestCluster = clusters.get(i);
 			if (nearestCluster.centroid.equals(centroid))
@@ -58,10 +57,10 @@ public class IncKMean implements Serializable {
 		return -1;
 	}
 	
-	public boolean isFitInCluser(String[] points) {
+	public boolean isFitInCluser(String[] point) {
 
 		for (int i = 0; i < clusters.size(); i++) {
-			if (clusters.get(i).fitInCluster(points))
+			if (clusters.get(i).fitInCluster(point))
 				return true;
 		}
 		return false;
