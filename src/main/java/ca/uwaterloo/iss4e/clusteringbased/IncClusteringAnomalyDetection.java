@@ -15,17 +15,7 @@ import org.apache.log4j.Logger;
 import scala.Tuple2;
 
 /**
- * Consumes messages from one or more topics in Kafka and does wordcount.
- *
- * Usage: IncClusteringAnomalyDetection <zkQuorum> <group> <topics> <numThreads>
- *   <zkQuorum> is a list of one or more zookeeper servers that make quorum
- *   <group> is the name of kafka consumer group
- *   <topics> is a list of one or more kafka topics to consume from
- *   <numThreads> is the number of threads the kafka consumer should use
- *
- * To run this example:
- *   `$ bin/run-example org.apache.spark.examples.streaming.IncClusteringAnomalyDetection zoo01,zoo02, \
- *    zoo03 my-consumer-group topic1,topic2 1`
+ * Realtime anomaly detection on smart meter data
  */
 
 public final class IncClusteringAnomalyDetection {
