@@ -1,4 +1,4 @@
-package ca.uwaterloo.iss4e.predictbased;
+package ca.uwaterloo.iss4e.datautils;
 
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.spark.SparkConf;

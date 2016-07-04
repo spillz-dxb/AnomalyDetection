@@ -1,4 +1,4 @@
-package ca.uwaterloo.iss4e.predictbased;
+package ca.uwaterloo.iss4e.datautils;
 
 //import org.apache.commons.math.stat.regression.OLSMultipleLinearRegression;
 import org.apache.hadoop.conf.Configuration;

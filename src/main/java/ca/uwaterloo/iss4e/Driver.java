@@ -2,9 +2,10 @@ package ca.uwaterloo.iss4e;
 
 import org.apache.hadoop.util.ProgramDriver;
 
-import ca.uwaterloo.iss4e.clusteringbased.IncClusteringAnomalyDetection;
+import ca.uwaterloo.iss4e.clusteringbased.ClusteredSelfAnomaly;
+import ca.uwaterloo.iss4e.datautils.DataPreparatorForClusteringBased;
+import ca.uwaterloo.iss4e.datautils.DataPreparatorForPredictBased;
 import ca.uwaterloo.iss4e.predictbased.GroupAnomaly;
-import ca.uwaterloo.iss4e.predictbased.SelfAnomaly;
 
 
 /**
@@ -16,8 +17,11 @@ public class Driver {
         ProgramDriver pgd = new ProgramDriver();
         try {
             pgd.addClass("GroupAnomaly", GroupAnomaly.class,  "Group anomaly");
-            pgd.addClass("SelfAnomaly", SelfAnomaly.class,  "Self anomaly");
-            pgd.addClass("IncClusteringAnomalyDetection", IncClusteringAnomalyDetection.class,  "IncClusteringAnomalyDetection");
+            pgd.addClass("SelfAnomaly", ca.uwaterloo.iss4e.predictbased.SelfAnomaly.class,  "Self anomaly");
+            pgd.addClass("ClusteredSelfAnomaly", ClusteredSelfAnomaly.class,  "ClusteredSelfAnomaly");
+
+            pgd.addClass("DataPreparatorForClusteringBased", DataPreparatorForClusteringBased.class,  "DataPreparatorForClusteringBased");
+            pgd.addClass("DataPreparatorForPredictBased", DataPreparatorForPredictBased.class,  "DataPreparatorForPredictBased");
 
             exitCode = pgd.run(argv);
         } catch (Throwable e) {

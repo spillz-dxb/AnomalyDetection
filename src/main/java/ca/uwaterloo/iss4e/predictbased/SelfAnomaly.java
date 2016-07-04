@@ -90,7 +90,7 @@ public final class SelfAnomaly {
     }
 
     public static void train(String inputDir, String parxModelDir, String normModelDir) {
-        SparkConf conf = new SparkConf().setAppName("SelfAnomaly-Training");
+        SparkConf conf = new SparkConf().setAppName("ClusteredSelfAnomaly-Training");
         final JavaSparkContext sc = new JavaSparkContext(conf);
         JavaRDD<String> trainingLines = sc.textFile(inputDir);
 
@@ -195,10 +195,10 @@ public final class SelfAnomaly {
         sc.stop();
     }
 
-    public static void detect(String parxModelDir, String normModelDir, String inputDir, final String outputDir, final double epsilon) {
-        SparkConf conf = new SparkConf().setAppName("SelfAnomaly-Detect");
+    public static void detect(String parxModelDir, String normModelDir, String inputDir, final String outputDir, final double threshold) {
+        SparkConf conf = new SparkConf().setAppName("ClusteredSelfAnomaly-Detect");
         final JavaSparkContext sc = new JavaSparkContext(conf);
-        sc.broadcast(epsilon);
+
 
         JavaRDD<String> paramLines = sc.textFile(parxModelDir);
         JavaPairRDD<Tuple2<Integer, Integer>, Double[]> paramRDD = paramLines.mapToPair(new PairFunction<String, Tuple2<Integer, Integer>, Double[]>() {
@@ -317,9 +317,9 @@ public final class SelfAnomaly {
                                 int readdate = dateDist._1.intValue();
                                 double x = Math.sqrt(dateDist._2.doubleValue());
                                 double propability = GroupAnomaly.phi(x, meanStdev[0], meanStdev[1]);
-                                if (propability < epsilon) {
+                               if (propability < threshold) {
                                     ret.add(new Tuple2<String, String>((meterID + "\t" + readdate), String.valueOf(propability)));
-                                }
+                               }
                             }
                         }
                         return ret;
@@ -331,19 +331,20 @@ public final class SelfAnomaly {
     }
 
     public static void main(String[] args) {
-        String usage = "SelfAnomaly [train|test] <parxModelDir> <normModelDir> <inputDir> <outputDir> <epsilon>";
-        if (args.length != 6) {
+        String usage = "SelfAnomaly trainingFlag <parxModelDir> <normModelDir> <trainInputDir> <testInputDir> <outlierOutputDir> <threshold>";
+        if (args.length != 7) {
             System.out.println(usage);
         }
         String parxModelDir = args[1];
         String normModelDir = args[2];
-        String inputDir = args[3];
-        String outputDir = args[4];
-        double epsilon = Double.valueOf(args[5]);
-        if ("train".equals(args[0])) {
-            SelfAnomaly.train(inputDir, parxModelDir, normModelDir);
+        String trainInputDir = args[3];
+        String testInputDir = args[4];
+        String outlierOutputDir = args[5];
+        double threshold = Double.valueOf(args[6]);
+        if (Integer.parseInt(args[0])==1) {
+            SelfAnomaly.train(trainInputDir, parxModelDir, normModelDir);
         } else {
-            SelfAnomaly.detect(parxModelDir, normModelDir, inputDir, outputDir, epsilon);
+            SelfAnomaly.detect(parxModelDir, normModelDir, testInputDir, outlierOutputDir, threshold);
         }
     }
 }
